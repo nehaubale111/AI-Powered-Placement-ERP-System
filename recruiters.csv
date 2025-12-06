@@ -1,0 +1,6 @@
+company_id,company_name,email,phone,password,location,website
+1,TechSoft Pvt Ltd,hr@techsoft.com,9876501234,hashed_pw1,Bangalore,http://techsoft.com
+2,Innova Solutions,jobs@innova.com,9123405678,hashed_pw2,Hyderabad,http://innova.com
+3,GreenEnergy Corp,careers@greenenergy.com,9988701122,hashed_pw3,Delhi,http://greenenergy.com
+4,MediTech Labs,hr@meditech.com,9001102233,hashed_pw4,Mumbai,http://meditech.com
+5,FinServe Global,recruit@finserve.com,9112233004,hashed_pw5,Pune,http://finserve.com

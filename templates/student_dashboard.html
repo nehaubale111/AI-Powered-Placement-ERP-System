@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Student Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='main/main.js') }}"></script>
+  <style>
+    .dashboard-section {
+      margin: 20px 0;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h3 {
+      color: #00aaff;
+      margin-bottom: 15px;
+    }
+    /* --- Multi-Step Form Styling --- */
+    .form-step { display: none; }
+    .form-step.active { display: block; }
+    .step-buttons { margin-top: 20px; }
+    
+    /* Improved Form Styling */
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #333;
+    }
+    .form-group .field-help {
+      font-size: 0.875rem;
+      color: #6c757d;
+      margin-top: 4px;
+      display: block;
+    }
+    input, select, textarea {
+      width: 95%;
+      padding: 8px;
+      margin: 6px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-family: inherit;
+    }
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    button {
+      background: #00aaff;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    button:hover {
+      background: #008ecc;
+    }
+    .logout-btn {
+      background: #dc3545;
+    }
+    .logout-btn:hover {
+      background: #c82333;
+    }
+    .required::after {
+      content: " *";
+      color: #dc3545;
+    }
+    .sgpa-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .cgpa-section {
+      margin: 15px 0;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 5px;
+      border: 1px solid #dee2e6;
+    }
+    
+    /* Job Styling */
+    .job-item {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      background: #f8f9fa;
+    }
+    .job-item.eligible {
+      background: #f8f9fa;
+      border-left: 4px solid #28a745;
+    }
+    .job-item.not-eligible {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+    }
+    .job-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+    .job-title {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #333;
+    }
+    .company-name {
+      color: #00aaff;
+      font-weight: 600;
+    }
+    .job-meta {
+      color: #6c757d;
+      font-size: 0.9em;
+      margin: 5px 0;
+    }
+    .eligibility-info {
+      background: #e7f3ff;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      border-left: 4px solid #00aaff;
+    }
+    .eligibility-warning {
+      color: #dc3545;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .apply-btn {
+      background: #28a745;
+      margin-top: 10px;
+    }
+    .apply-btn:hover {
+      background: #218838;
+    }
+    .apply-btn:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+    
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    
+    .modal-content {
+      background-color: #fefefe;
+      margin: 5% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 600px;
+      animation: modalSlideIn 0.3s ease-out;
+    }
+    
+    @keyframes modalSlideIn {
+      from { transform: translateY(-50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .close {
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    .close:hover {
+      color: #dc3545;
+    }
+    
+    .modal .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .modal .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #333;
+    }
+    
+    .modal .form-group input,
+    .modal .form-group select,
+    .modal .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-family: inherit;
+    }
+    
+    .modal .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    .resume-section {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 15px 0;
+      border-left: 4px solid #00aaff;
+    }
+    
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <!-- 🔔 Flash Messages Section -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <h2>Welcome, {{ session.get('name') }}</h2>
+  <a href="{{ url_for('logout') }}"><button class="logout-btn">Logout</button></a>
+
+  <!-- Upload Resume -->
+  <div class="dashboard-section">
+    <h3>Upload/Update Resume</h3>
+    {% if current_resume_path %}
+      <p>Your current resume: 
+        <a href="{{ url_for('download_resume', filename=current_resume_path) }}" target="_blank">
+          View Current Resume
+        </a>
+      </p>
+      <form action="{{ url_for('delete_resume') }}" method="POST">
+        <button type="submit" class="logout-btn">Delete Current Resume</button>
+      </form>
+    {% else %}
+      <p>No resume uploaded yet.</p>
+    {% endif %}
+    <form id="resumeForm" method="POST" action="{{ url_for('upload_resume') }}" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="resume" class="required">Select Resume File</label>
+        <input type="file" name="resume" id="resume" accept=".pdf,.doc,.docx" required>
+        <span class="field-help">Upload your resume in PDF or DOCX format (Max 5MB)</span>
+      </div>
+      <button type="submit">Upload/Update Resume</button>
+    </form>
+  </div>
+
+  <!-- Available Jobs Section -->
+  <div class="dashboard-section">
+    <h3>Available Jobs</h3>
+    <div class="eligibility-info">
+      <strong>📝 Job Application Rules:</strong>
+      <ul style="margin: 5px 0; padding-left: 20px;">
+        <li>You can only see jobs targeted for your branch</li>
+        <li>You can apply only if your CGPA meets the job's minimum requirement</li>
+        <li>Make sure your profile is complete and resume is uploaded</li>
+      </ul>
+    </div>
+    <div id="jobsList">
+      Loading jobs...
+    </div>
+  </div>
+
+  <!-- Job Application Modal -->
+  <div id="applicationModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeApplicationModal()">&times;</span>
+      
+      <h3>Apply for Job</h3>
+      <div id="jobApplicationInfo" style="background: #e7f3ff; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+        <h4 id="modalJobTitle"></h4>
+        <p id="modalCompanyName" style="margin: 5px 0;"></p>
+      </div>
+      
+      <form id="jobApplicationForm">
+        <input type="hidden" id="modalJobId" name="job_id">
+        
+        <div class="form-group">
+          <label for="experience_years" class="required">Years of Experience</label>
+          <input type="number" id="experience_years" name="experience_years" min="0" max="20" value="0" required>
+          <span class="field-help">Total years of professional experience</span>
+        </div>
+        
+        <div class="form-group">
+          <label for="commitment_hours" class="required">Available Hours per Week</label>
+          <select id="commitment_hours" name="commitment_hours" required>
+            <option value="20">20 hours (Part-time)</option>
+            <option value="40" selected>40 hours (Full-time)</option>
+            <option value="50">50+ hours</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="notice_period" class="required">Notice Period</label>
+          <select id="notice_period" name="notice_period" required>
+            <option value="immediate">Immediate</option>
+            <option value="15" selected>15 days</option>
+            <option value="30">30 days</option>
+            <option value="60">60 days</option>
+            <option value="90">90 days</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="current_ctc">Current CTC (Optional)</label>
+          <input type="text" id="current_ctc" name="current_ctc" placeholder="e.g., 8 LPA">
+          <span class="field-help">Current Annual Salary Package</span>
+        </div>
+        
+        <div class="form-group">
+          <label for="expected_ctc" class="required">Expected CTC</label>
+          <input type="text" id="expected_ctc" name="expected_ctc" placeholder="e.g., 12 LPA" required>
+          <span class="field-help">Expected Annual Salary Package</span>
+        </div>
+        
+        <div class="form-group">
+          <label for="relocation" class="required">Willing to Relocate?</label>
+          <select id="relocation" name="relocation" required>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+            <option value="maybe">Maybe, depends on location</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="cover_letter">Cover Letter (Optional)</label>
+          <textarea id="cover_letter" name="cover_letter" placeholder="Why are you interested in this position? What makes you a good fit?" rows="4"></textarea>
+          <span class="field-help">Briefly describe your interest and qualifications</span>
+        </div>
+        
+        <div class="resume-section">
+          <h4>Resume Submission</h4>
+          <p>Your resume: 
+            <strong id="currentResumeName">
+              {% if current_resume_path %}
+                {{ current_resume_path }}
+              {% else %}
+                No resume uploaded
+              {% endif %}
+            </strong>
+          </p>
+          {% if not current_resume_path %}
+          <p style="color: #dc3545; font-weight: bold;">
+            ⚠️ Please upload your resume before applying!
+          </p>
+          {% endif %}
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" onclick="closeApplicationModal()" style="background: #6c757d;">Cancel</button>
+          <button type="submit" id="submitApplicationBtn" {% if not current_resume_path %}disabled{% endif %}>
+            Submit Application
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Student Profile Form -->
+  <div class="dashboard-section">
+    <h3>Student Profile Form</h3>
+    <form method="POST" action="/student/profile">
+      
+      <!-- Step 1: Personal Information -->
+      <div class="form-step active">
+        <h4>Personal Information</h4>
+        
+        <div class="form-group">
+          <label for="roll_no" class="required">Roll Number</label>
+          <input type="text" id="roll_no" name="roll_no" placeholder="e.g., 202301001" value="{{ profile.roll_no or '' }}" required>
+          <span class="field-help">Enter your college roll number</span>
+        </div>
+
+        <div class="form-group">
+          <label for="prn_no" class="required">PRN Number</label>
+          <input type="text" id="prn_no" name="prn_no" placeholder="e.g., 20230100112345" value="{{ profile.prn_no or '' }}" required>
+          <span class="field-help">Enter your Permanent Registration Number</span>
+        </div>
+
+        <div class="form-group">
+          <label for="first_name" class="required">First Name</label>
+          <input type="text" id="first_name" name="first_name" placeholder="Enter your first name" value="{{ profile.first_name or '' }}" required>
+        </div>
+
+        <div class="form-group">
+          <label for="last_name" class="required">Last Name</label>
+          <input type="text" id="last_name" name="last_name" placeholder="Enter your last name" value="{{ profile.last_name or '' }}" required>
+        </div>
+
+        <div class="form-group">
+          <label for="dob" class="required">Date of Birth</label>
+          <input type="date" id="dob" name="dob" value="{{ profile.dob or '' }}" required>
+          <span class="field-help">Select your date of birth</span>
+        </div>
+
+        <div class="form-group">
+          <label for="gender" class="required">Gender</label>
+          <select id="gender" name="gender" required>
+            <option value="">-- Select Gender --</option>
+            <option value="Male" {% if profile.gender == "Male" %}selected{% endif %}>Male</option>
+            <option value="Female" {% if profile.gender == "Female" %}selected{% endif %}>Female</option>
+            <option value="Other" {% if profile.gender == "Other" %}selected{% endif %}>Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="phone" class="required">Phone Number</label>
+          <input type="tel" id="phone" name="phone" placeholder="e.g., 9876543210" pattern="[0-9]{10}" value="{{ profile.phone or '' }}" required>
+          <span class="field-help">Enter your 10-digit mobile number</span>
+        </div>
+
+        <div class="form-group">
+          <label for="email" class="required">Email Address</label>
+          <input type="email" id="email" name="email" placeholder="e.g., your.name@college.edu" value="{{ profile.email or '' }}" required>
+          <span class="field-help">Enter your college email address</span>
+        </div>
+
+        <div class="step-buttons">
+          <button type="button" onclick="nextStep()">Next →</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Academic Information -->
+      <div class="form-step">
+        <h4>Academic Information</h4>
+        
+        <div class="form-group">
+          <label for="department" class="required">Department</label>
+          <input type="text" id="department" name="department" placeholder="e.g., AI & ML, Computer Engineering" value="{{ profile.department or '' }}" required>
+          <span class="field-help">Enter your department/branch</span>
+        </div>
+
+        <h5>10th Grade Details</h5>
+        <div class="form-group">
+          <label for="tenth_percentage">10th Percentage</label>
+          <input type="number" step="0.01" id="tenth_percentage" name="tenth_percentage" placeholder="e.g., 85.50" min="0" max="100" value="{{ profile.tenth_percentage or '' }}">
+          <span class="field-help">Enter your 10th grade percentage</span>
+        </div>
+
+        <div class="form-group">
+          <label for="tenth_year">10th Passing Year</label>
+          <input type="number" id="tenth_year" name="tenth_year" placeholder="e.g., 2020" min="1990" max="2030" value="{{ profile.tenth_year or '' }}">
+        </div>
+
+        <div class="form-group">
+          <label for="tenth_board">10th Board</label>
+          <input type="text" id="tenth_board" name="tenth_board" placeholder="e.g., CBSE, State Board" value="{{ profile.tenth_board or '' }}">
+        </div>
+
+        <h5>12th Grade Details</h5>
+        <div class="form-group">
+          <label for="twelfth_percentage">12th Percentage</label>
+          <input type="number" step="0.01" id="twelfth_percentage" name="twelfth_percentage" placeholder="e.g., 75.80" min="0" max="100" value="{{ profile.twelfth_percentage or '' }}">
+        </div>
+
+        <div class="form-group">
+          <label for="twelfth_year">12th Passing Year</label>
+          <input type="number" id="twelfth_year" name="twelfth_year" placeholder="e.g., 2022" min="1990" max="2030" value="{{ profile.twelfth_year or '' }}">
+        </div>
+
+        <div class="form-group">
+          <label for="twelfth_board">12th Board</label>
+          <input type="text" id="twelfth_board" name="twelfth_board" placeholder="e.g., CBSE, State Board" value="{{ profile.twelfth_board or '' }}">
+        </div>
+
+        <h5>Diploma Details (If Applicable)</h5>
+        <div class="form-group">
+          <label for="diploma_percentage">Diploma Percentage</label>
+          <input type="number" step="0.01" id="diploma_percentage" name="diploma_percentage" placeholder="e.g., 80.00" min="0" max="100" value="{{ profile.diploma_percentage or '' }}">
+        </div>
+
+        <div class="form-group">
+          <label for="diploma_year">Diploma Year</label>
+          <input type="number" id="diploma_year" name="diploma_year" placeholder="e.g., 2021" min="1990" max="2030" value="{{ profile.diploma_year or '' }}">
+        </div>
+
+        <div class="form-group">
+          <label for="diploma_branch">Diploma Branch</label>
+          <input type="text" id="diploma_branch" name="diploma_branch" placeholder="e.g., Computer Engineering" value="{{ profile.diploma_branch or '' }}">
+        </div>
+
+        <h5>Semester GPA</h5>
+        <div class="sgpa-grid">
+          <div class="form-group">
+            <label for="sem1">SEM 1 GPA</label>
+            <input type="number" step="0.01" id="sem1" name="sem1" placeholder="0.00" min="0" max="10" value="{{ profile.sem1 or '' }}" class="sgpa-input">
+          </div>
+          <div class="form-group">
+            <label for="sem2">SEM 2 GPA</label>
+            <input type="number" step="0.01" id="sem2" name="sem2" placeholder="0.00" min="0" max="10" value="{{ profile.sem2 or '' }}" class="sgpa-input">
+          </div>
+          <div class="form-group">
+            <label for="sem3">SEM 3 GPA</label>
+            <input type="number" step="0.01" id="sem3" name="sem3" placeholder="0.00" min="0" max="10" value="{{ profile.sem3 or '' }}" class="sgpa-input">
+          </div>
+          <div class="form-group">
+            <label for="sem4">SEM 4 GPA</label>
+            <input type="number" step="0.01" id="sem4" name="sem4" placeholder="0.00" min="0" max="10" value="{{ profile.sem4 or '' }}" class="sgpa-input">
+          </div>
+          <div class="form-group">
+            <label for="sem5">SEM 5 GPA</label>
+            <input type="number" step="0.01" id="sem5" name="sem5" placeholder="0.00" min="0" max="10" value="{{ profile.sem5 or '' }}" class="sgpa-input">
+          </div>
+          <div class="form-group">
+            <label for="sem6">SEM 6 GPA</label>
+            <input type="number" step="0.01" id="sem6" name="sem6" placeholder="0.00" min="0" max="10" value="{{ profile.sem6 or '' }}" class="sgpa-input">
+          </div>
+          <div class="form-group">
+            <label for="sem7">SEM 7 GPA</label>
+            <input type="number" step="0.01" id="sem7" name="sem7" placeholder="0.00" min="0" max="10" value="{{ profile.sem7 or '' }}" class="sgpa-input">
+          </div>
+          <div class="form-group">
+            <label for="sem8">SEM 8 GPA</label>
+            <input type="number" step="0.01" id="sem8" name="sem8" placeholder="0.00" min="0" max="10" value="{{ profile.sem8 or '' }}" class="sgpa-input">
+          </div>
+        </div>
+
+        <div class="cgpa-section">
+          <h5>CGPA Calculator</h5>
+          <button type="button" onclick="calculateCGPA()" style="background: #28a745;">Calculate CGPA</button>
+          <button type="button" onclick="clearCGPA()" style="background: #dc3545;">Clear All</button>
+          
+          <div id="cgpaResult">
+            Calculated CGPA: <span id="calculatedCGPA">0.00</span>
+          </div>
+          
+          <input type="hidden" name="average" id="calculatedAverage" value="{{ profile.average or '' }}">
+        </div>
+
+        <div class="form-group">
+          <label for="engg_passing_year">Engineering Passing Year</label>
+          <input type="text" id="engg_passing_year" name="engg_passing_year" placeholder="e.g., 2026" value="{{ profile.engg_passing_year or '' }}">
+          <span class="field-help">Expected year of graduation</span>
+        </div>
+
+        <div class="form-group">
+          <label for="live_backlogs">Live Backlogs</label>
+          <input type="number" id="live_backlogs" name="live_backlogs" placeholder="0" min="0" value="{{ profile.live_backlogs or '' }}">
+          <span class="field-help">Number of current backlogs (if any)</span>
+        </div>
+
+        <div class="form-group">
+          <label for="year_gap">Year Gap</label>
+          <input type="number" id="year_gap" name="year_gap" placeholder="0" min="0" value="{{ profile.year_gap or '' }}">
+          <span class="field-help">Academic year gaps (if any)</span>
+        </div>
+
+        <div class="step-buttons">
+          <button type="button" onclick="prevStep()">← Back</button>
+          <button type="button" onclick="nextStep()">Next →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Skills & Additional Info -->
+      <div class="form-step">
+        <h4>Skills & Additional Information</h4>
+        
+        <div class="form-group">
+          <label for="programming_languages">Programming Languages & Technologies</label>
+          <textarea id="programming_languages" name="programming_languages" placeholder="e.g., Python, Java, JavaScript, SQL, React, MongoDB...">{{ profile.programming_languages or '' }}</textarea>
+          <span class="field-help">List programming languages, frameworks, and technologies you know</span>
+        </div>
+
+        <div class="form-group">
+          <label for="extracurricular">Extracurricular Activities</label>
+          <textarea id="extracurricular" name="extracurricular" placeholder="e.g., Sports, Cultural activities, Club participation, Volunteering...">{{ profile.extracurricular or '' }}</textarea>
+          <span class="field-help">Sports, cultural activities, clubs participation, leadership roles</span>
+        </div>
+
+        <div class="form-group">
+          <label for="academic_projects">Academic Projects</label>
+          <textarea id="academic_projects" name="academic_projects" placeholder="e.g., AI-Powered Placement ERP System - Developed a full-stack web application...">{{ profile.academic_projects or '' }}</textarea>
+          <span class="field-help">List your academic projects with brief descriptions</span>
+        </div>
+
+        <div class="form-group">
+          <label for="certificates">Certifications & Achievements</label>
+          <textarea id="certificates" name="certificates" placeholder="e.g., Coursera Machine Learning, Google Cloud Certification, Hackathon winner...">{{ profile.certificates or '' }}</textarea>
+          <span class="field-help">Certifications, online courses, awards, and achievements</span>
+        </div>
+
+        <div class="form-group">
+          <label for="hobbies">Hobbies & Interests</label>
+          <textarea id="hobbies" name="hobbies" placeholder="e.g., Reading, Photography, Coding, Music...">{{ profile.hobbies or '' }}</textarea>
+        </div>
+
+        <div class="step-buttons">
+          <button type="button" onclick="prevStep()">← Back</button>
+          <button type="button" onclick="nextStep()">Next →</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Online Presence & Address -->
+      <div class="form-step">
+        <h4>Online Presence & Address</h4>
+        
+        <div class="form-group">
+          <label for="linkedin_url">LinkedIn Profile URL</label>
+          <input type="url" id="linkedin_url" name="linkedin_url" placeholder="https://linkedin.com/in/yourprofile" value="{{ profile.linkedin_url or '' }}">
+          <span class="field-help">Your LinkedIn profile URL</span>
+        </div>
+
+        <div class="form-group">
+          <label for="github_url">GitHub Profile URL</label>
+          <input type="url" id="github_url" name="github_url" placeholder="https://github.com/yourusername" value="{{ profile.github_url or '' }}">
+          <span class="field-help">Your GitHub profile URL</span>
+        </div>
+
+        <div class="form-group">
+          <label for="local_address">Local Address</label>
+          <textarea id="local_address" name="local_address" placeholder="Current address for communication (Hostel/Flat details)">{{ profile.local_address or '' }}</textarea>
+          <span class="field-help">Current local address for communication</span>
+        </div>
+
+        <div class="form-group">
+          <label for="permanent_address">Permanent Address</label>
+          <textarea id="permanent_address" name="permanent_address" placeholder="Permanent home address">{{ profile.permanent_address or '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="native_place">Native Place</label>
+          <input type="text" id="native_place" name="native_place" placeholder="Your native city/town" value="{{ profile.native_place or '' }}">
+        </div>
+
+        <div class="step-buttons">
+          <button type="button" onclick="prevStep()">← Back</button>
+          <button type="submit">Submit Profile</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Placement Events -->
+  <div class="dashboard-section">
+    <h3>Upcoming Placement Events</h3>
+    <ul class="events-list">
+      <li>Loading events...</li>
+    </ul>
+  </div>
+
+  <!-- Placement Prep Resources -->
+  <div class="dashboard-section">
+    <h3>Placement Preparation Resources</h3>
+    <ul class="resource-list">
+      <li>Loading resources...</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  // Multi-step form logic
+  let currentStep = 0;
+  const steps = document.querySelectorAll(".form-step");
+
+  function showStep(step) {
+    steps.forEach((s, i) => s.classList.toggle("active", i === step));
+  }
+  function nextStep() {
+    if (currentStep < steps.length - 1) {
+      currentStep++;
+      showStep(currentStep);
+    }
+  }
+  function prevStep() {
+    if (currentStep > 0) {
+      currentStep--;
+      showStep(currentStep);
+    }
+  }
+  showStep(currentStep);
+
+  // Load Events and Resources
+  function loadEvents() {
+    fetch("/student_events")
+      .then(res => res.json())
+      .then(data => {
+        let html = "";
+        if (data.length === 0) {
+          html = "<li>No upcoming events scheduled.</li>";
+        } else {
+          data.forEach(event => {
+            html += `<li class="event-item">
+                       <h4>${event.title}</h4>
+                       <p>${event.description}</p>
+                       <p><strong>Date:</strong> ${new Date(event.date).toLocaleDateString()}</p>
+                       <p><strong>Posted by:</strong> ${event.created_by_name || 'TPO'}</p>
+                     </li>`;
+          });
+        }
+        document.querySelector(".events-list").innerHTML = html;
+      })
+      .catch(error => {
+        console.error('Error loading events:', error);
+        document.querySelector(".events-list").innerHTML = '<li>Error loading events</li>';
+      });
+  }
+
+  function loadResources() {
+    fetch("/prep_resources_student")
+      .then(res => res.json())
+      .then(data => {
+        let html = "";
+        if (data.length === 0) {
+          html = "<li>No resources available.</li>";
+        } else {
+          data.forEach(resource => {
+            html += `<li>
+                       <h4>${resource.title}</h4>
+                       <p>${resource.description}</p>
+                       <a href="/download_resource/${resource.file_path}" target="_blank">Download</a>
+                     </li>`;
+          });
+        }
+        document.querySelector(".resource-list").innerHTML = html;
+      })
+      .catch(error => {
+        console.error('Error loading resources:', error);
+        document.querySelector(".resource-list").innerHTML = '<li>Error loading resources</li>';
+      });
+  }
+
+  // CGPA Calculation Functions
+  function calculateCGPA() {
+    console.log('Calculate CGPA clicked');
+    const sgpaInputs = document.querySelectorAll('.sgpa-input');
+    let totalSGPA = 0;
+    let semestersCount = 0;
+
+    sgpaInputs.forEach(input => {
+      const value = parseFloat(input.value);
+      console.log(`Input: ${input.value}, parsed: ${value}`);
+      
+      if (input.value !== '' && !isNaN(value) && value >= 0 && value <= 10) {
+        totalSGPA += value;
+        semestersCount++;
+        input.style.borderColor = '#28a745';
+      } else if (input.value !== '') {
+        input.style.borderColor = '#dc3545';
+        alert(`Invalid SGPA in ${input.previousElementSibling.textContent}. Please enter value between 0-10.`);
+        return;
+      } else {
+        input.style.borderColor = '#ccc';
+      }
+    });
+
+    console.log(`Total SGPA: ${totalSGPA}, Semesters: ${semestersCount}`);
+
+    if (semestersCount > 0) {
+      const cgpa = totalSGPA / semestersCount;
+      const roundedCGPA = cgpa.toFixed(2);
+      
+      document.getElementById('calculatedCGPA').textContent = roundedCGPA;
+      document.getElementById('calculatedCGPA').style.color = '#155724';
+      document.getElementById('calculatedAverage').value = roundedCGPA;
+      
+      const averageInput = document.querySelector('input[name="average"]');
+      if (averageInput) {
+        averageInput.value = roundedCGPA;
+      }
+      
+      alert(`CGPA Calculated: ${roundedCGPA}`);
+    } else {
+      alert('Please enter at least one SGPA value');
+    }
+  }
+
+  function clearCGPA() {
+    console.log('Clear clicked');
+    const sgpaInputs = document.querySelectorAll('.sgpa-input');
+    sgpaInputs.forEach(input => {
+      input.value = '';
+      input.style.borderColor = '#ccc';
+    });
+    
+    document.getElementById('calculatedCGPA').textContent = '0.00';
+    document.getElementById('calculatedCGPA').style.color = '#6c757d';
+    document.getElementById('calculatedAverage').value = '';
+    
+    const averageInput = document.querySelector('input[name="average"]');
+    if (averageInput) {
+      averageInput.value = '';
+    }
+    
+    alert('All SGPA fields cleared');
+  }
+
+  // Job Management Functions
+  let currentJobData = null;
+
+  function loadJobs() {
+    fetch("/student_jobs")
+      .then(res => res.json())
+      .then(jobs => {
+        let html = "";
+        if (jobs.length === 0) {
+          html = "<p>No jobs available at the moment.</p>";
+        } else {
+          jobs.forEach(job => {
+            const canApply = job.can_apply;
+            const branches = job.target_branches ? 
+                (Array.isArray(job.target_branches) ? job.target_branches.join(', ') : job.target_branches) 
+                : 'All Branches';
+            
+            const jobClass = canApply ? 'job-item eligible' : 'job-item not-eligible';
+            
+            html += `
+              <div class="${jobClass}">
+                <div class="job-header">
+                  <div>
+                    <div class="job-title">${job.title}</div>
+                    <div class="company-name">${job.company_name}</div>
+                  </div>
+                </div>
+                <div class="job-meta">
+                  <strong>📍 Location:</strong> ${job.location} | 
+                  <strong>💰 Salary:</strong> ${job.salary}
+                </div>
+                <div class="job-meta">
+                  <strong>📅 Deadline:</strong> ${new Date(job.deadline).toLocaleDateString()} | 
+                  <strong>🎯 Min CGPA:</strong> ${job.eligibility} | 
+                  <strong>🎓 Branches:</strong> ${branches}
+                </div>
+                <p>${job.description}</p>
+                
+                ${canApply ? 
+                  `<button onclick="applyForJob(${job.job_id}, '${job.title.replace(/'/g, "\\'")}', '${job.company_name.replace(/'/g, "\\'")}')" class="apply-btn">Apply Now</button>` :
+                  `<div class="eligibility-warning">
+                    ${!job.branch_eligible ? '❌ Not eligible for your branch' : ''}
+                    ${!job.branch_eligible && !job.cgpa_eligible ? ' | ' : ''}
+                    ${!job.cgpa_eligible ? '❌ CGPA below requirement' : ''}
+                  </div>`
+                }
+              </div>
+            `;
+          });
+        }
+        document.getElementById("jobsList").innerHTML = html;
+      })
+      .catch(error => {
+        console.error('Error loading jobs:', error);
+        document.getElementById("jobsList").innerHTML = '<p>Error loading jobs. Please try again later.</p>';
+      });
+  }
+
+  function applyForJob(jobId, jobTitle, companyName) {
+    if (!confirm("Do you want to apply for this position?")) {
+      return;
+    }
+    
+    // Store job data
+    currentJobData = { jobId, jobTitle, companyName };
+    
+    // Check if resume is uploaded
+    const hasResume = document.getElementById('currentResumeName').textContent !== 'No resume uploaded';
+    
+    if (!hasResume) {
+      alert('Please upload your resume before applying for jobs.');
+      return;
+    }
+    
+    // Populate modal
+    document.getElementById('modalJobTitle').textContent = jobTitle;
+    document.getElementById('modalCompanyName').textContent = companyName;
+    document.getElementById('modalJobId').value = jobId;
+    
+    // Show modal
+    document.getElementById('applicationModal').style.display = 'block';
+  }
+
+  function closeApplicationModal() {
+    document.getElementById('applicationModal').style.display = 'none';
+    document.getElementById('jobApplicationForm').reset();
+    currentJobData = null;
+  }
+
+  // Handle form submission
+  document.getElementById('jobApplicationForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (!currentJobData) {
+      alert('Error: No job selected.');
+      return;
+    }
+    
+    const submitBtn = document.getElementById('submitApplicationBtn');
+    const originalText = submitBtn.textContent;
+    
+    try {
+      // Disable button and show loading
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+      
+      const formData = new FormData(this);
+      
+      const response = await fetch("/apply_job", {
+        method: "POST",
+        body: formData
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit application');
+      }
+      
+      alert('✅ ' + data.message);
+      closeApplicationModal();
+      loadJobs(); // Reload jobs to update UI
+      
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      alert('❌ ' + error.message);
+    } finally {
+      // Re-enable button
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  });
+
+  // Close modal when clicking outside
+  window.addEventListener('click', function(event) {
+    const modal = document.getElementById('applicationModal');
+    if (event.target === modal) {
+      closeApplicationModal();
+    }
+  });
+
+  // Load when page is ready
+  document.addEventListener("DOMContentLoaded", function() {
+    loadEvents();
+    loadResources();
+    loadJobs();
+  });
+</script>
+</body>
+</html>

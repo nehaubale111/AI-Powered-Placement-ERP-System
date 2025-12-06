@@ -1,0 +1,1545 @@
+<!-- tpo_dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>TPO Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Include required libraries for export functionality -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        .tpo-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Improved Form Styling */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .form-group .field-help {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 4px;
+            display: block;
+        }
+        input, select, textarea {
+            width: 95%;
+            padding: 8px;
+            margin: 6px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-family: inherit;
+        }
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        /* Enhanced Table Styling for All Attributes */
+        .database-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 11px;
+        }
+        
+        .database-table th, 
+        .database-table td {
+            border: 1px solid #ddd;
+            padding: 4px;
+            text-align: left;
+            vertical-align: top;
+            white-space: nowrap;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .database-table th {
+            background: #00aaff;
+            color: white;
+            position: sticky;
+            top: 0;
+            font-weight: 600;
+        }
+        
+        .database-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        .database-table tr:hover {
+            background: #f0f8ff;
+        }
+        
+        button {
+            background: #00aaff;
+            color: white;
+            padding: 4px 8px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin: 2px;
+            font-size: 10px;
+        }
+        
+        .logout-btn {
+            background: #dc3545;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        .delete-btn {
+            background: #dc3545;
+        }
+        
+        .view-btn {
+            background: #28a745;
+        }
+        
+        .export-btn {
+            background: #ff6b00;
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        
+        .export-btn:hover {
+            background: #e55a00;
+        }
+
+        .preset-btn {
+            background: #17a2b8;
+            padding: 6px 12px;
+            font-size: 12px;
+            margin: 2px;
+        }
+
+        .custom-export-btn {
+            background: #28a745;
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        
+        .profile-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .profile-modal-content {
+            background-color: white;
+            margin: 2% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .close-modal {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .profile-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .profile-section {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        /* Table container for horizontal scrolling */
+        .table-container {
+            overflow-x: auto;
+            margin: 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .empty-data {
+            color: #999;
+            font-style: italic;
+        }
+        
+        .alert {
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .export-options {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .export-presets {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .export-presets strong {
+            display: block;
+            margin-bottom: 10px;
+            color: #17a2b8;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        .attribute-group {
+            background: #e9ecef;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        /* Column Selection Modal Styles */
+        .column-selection {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+
+        .column-group {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+        }
+
+        .column-group h4 {
+            margin: 0 0 10px 0;
+            color: #00aaff;
+            font-size: 14px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .column-group label {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+
+        .column-group label:hover {
+            background-color: #f8f9fa;
+        }
+
+        .column-group input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.1);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+
+        .selection-summary {
+            background: #e7f3ff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 14px;
+            border-left: 4px solid #00aaff;
+        }
+
+        .quick-select-buttons {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .quick-select-btn {
+            background: #6c757d;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .quick-select-btn:hover {
+            background: #5a6268;
+        }
+
+        /* Simple form layout */
+        .simple-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .profile-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .export-options {
+                justify-content: flex-start;
+            }
+            
+            .database-table {
+                font-size: 9px;
+            }
+
+            .simple-form {
+                grid-template-columns: 1fr;
+            }
+
+            .column-selection {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Welcome, TPO</h2>
+            <a href="{{ url_for('logout') }}">
+                <button class="logout-btn">Logout</button>
+            </a>
+        </header>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Post Event Section -->
+        <section class="tpo-section">
+            <h3>Post Placement Event</h3>
+            <form id="postEventForm" method="POST" action="/add_event">
+                <div class="form-group">
+                    <label for="eventTitle" class="required">Event Title</label>
+                    <input type="text" id="eventTitle" name="title" placeholder="e.g., Google Campus Drive, Amazon Recruitment, TCS Placement" required>
+                    <span class="field-help">Enter a clear and descriptive title for the placement event</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventDescription">Event Description</label>
+                    <textarea id="eventDescription" name="description" placeholder="e.g., Google is conducting campus drive for 2024 batch. Eligibility: 7.0+ CGPA, no active backlogs..."></textarea>
+                    <span class="field-help">Provide detailed information about the event, eligibility criteria, and instructions for students</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventDate" class="required">Event Date</label>
+                    <input type="date" id="eventDate" name="date" required>
+                    <span class="field-help">Select the date when the placement event will occur</span>
+                </div>
+
+                <button type="submit">Post Event</button>
+            </form>
+        </section>
+
+        <!-- Post Prep Resource Section -->
+        <section class="tpo-section">
+            <h3>Upload Preparation Resource</h3>
+            <form id="postResourceForm" method="POST" action="/add_resource" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="resourceTitle" class="required">Resource Title</label>
+                    <input type="text" id="resourceTitle" name="title" placeholder="e.g., Aptitude Test Guide, Technical Interview Questions, Resume Writing Tips" required>
+                    <span class="field-help">Enter a descriptive title for the study material</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="resourceDescription">Resource Description</label>
+                    <textarea id="resourceDescription" name="description" placeholder="e.g., Comprehensive guide covering quantitative aptitude, logical reasoning, and verbal ability..."></textarea>
+                    <span class="field-help">Briefly describe what this resource contains and how it will help students</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="resourceFile" class="required">Upload File</label>
+                    <input type="file" id="resourceFile" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" required>
+                    <span class="field-help">Supported formats: PDF, Word, PowerPoint, Text files (Max 10MB)</span>
+                </div>
+
+                <button type="submit">Upload Resource</button>
+            </form>
+        </section>
+
+        <!-- Student Database Section - SHOWING ALL ATTRIBUTES -->
+        <section class="tpo-section" id="students">
+            <div class="section-header">
+                <div>
+                    <h3>Complete Student Database</h3>
+                    <p>Showing ALL student attributes from database</p>
+                </div>
+                <div class="export-options">
+                    <button onclick="openColumnModal('excel')" class="custom-export-btn">🎯 Choose Data to Export</button>
+                    <button onclick="exportToExcel()" class="export-btn">📋 Full Data Excel</button>
+                    <button onclick="exportToPDF()" class="export-btn">📄 Full Data PDF</button>
+                </div>
+            </div>
+
+            <!-- Quick Export Presets -->
+            <div class="export-presets">
+                <strong>Quick Export Presets:</strong>
+                <button onclick="exportBasicInfo()" class="preset-btn">Basic Info</button>
+                <button onclick="exportAcademicInfo()" class="preset-btn">Academic Only</button>
+                <button onclick="exportContactInfo()" class="preset-btn">Contact Info</button>
+                <button onclick="exportFullTechnical()" class="preset-btn">Technical Skills</button>
+                <button onclick="exportForPlacement()" class="preset-btn">Placement Ready</button>
+            </div>
+            
+            <div class="table-container">
+                <table class="database-table" id="studentDataTable">
+                    <thead>
+                        <tr>
+                            <!-- Personal Information -->
+                            <th>ID</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Roll No</th>
+                            <th>PRN No</th>
+                            <th>DOB</th>
+                            <th>Gender</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            
+                            <!-- Academic Information - 10th -->
+                            <th>10th %</th>
+                            <th>10th Year</th>
+                            <th>10th Board</th>
+                            
+                            <!-- Academic Information - 12th -->
+                            <th>12th %</th>
+                            <th>12th Year</th>
+                            <th>12th Board</th>
+                            
+                            <!-- Diploma Information -->
+                            <th>Diploma %</th>
+                            <th>Diploma Year</th>
+                            <th>Diploma Branch</th>
+                            
+                            <!-- Engineering Information -->
+                            <th>Department</th>
+                            <th>Passing Year</th>
+                            <th>Average %</th>
+                            <th>Live Backlogs</th>
+                            <th>Year Gap</th>
+                            
+                            <!-- Semester-wise GPA -->
+                            <th>SEM 1</th>
+                            <th>SEM 2</th>
+                            <th>SEM 3</th>
+                            <th>SEM 4</th>
+                            <th>SEM 5</th>
+                            <th>SEM 6</th>
+                            <th>SEM 7</th>
+                            <th>SEM 8</th>
+                            
+                            <!-- Skills & Projects -->
+                            <th>Programming</th>
+                            <th>Projects</th>
+                            <th>Certificates</th>
+                            <th>Extracurricular</th>
+                            <th>Hobbies</th>
+                            
+                            <!-- Online Presence -->
+                            <th>LinkedIn</th>
+                            <th>GitHub</th>
+                            
+                            <!-- Address Information -->
+                            <th>Local Address</th>
+                            <th>Permanent Address</th>
+                            <th>Native Place</th>
+                            
+                            <!-- System Information -->
+                            <th>Resume</th>
+                            <th>Created At</th>
+                            <th>Last Updated</th>
+                            
+                            <!-- Actions -->
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody">
+                        <tr>
+                            <td colspan="42" style="text-align: center; padding: 20px;">
+                                Loading complete student records...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Profile Modal -->
+        <div id="profileModal" class="profile-modal">
+            <div class="profile-modal-content">
+                <span class="close-modal" onclick="closeModal()">&times;</span>
+                <div id="modalContent"></div>
+            </div>
+        </div>
+
+        <!-- Column Selection Modal -->
+        <div id="columnModal" class="profile-modal">
+            <div class="profile-modal-content" style="max-width: 900px;">
+                <span class="close-modal" onclick="closeColumnModal()">&times;</span>
+                <h3>🎯 Select Data to Export</h3>
+                <p>Choose exactly which student information you want to download:</p>
+                
+                <div class="quick-select-buttons">
+                    <button onclick="selectAllColumns()" class="quick-select-btn">Select All</button>
+                    <button onclick="deselectAllColumns()" class="quick-select-btn">Deselect All</button>
+                    <button onclick="selectPersonalInfo()" class="quick-select-btn">Personal Info Only</button>
+                    <button onclick="selectAcademicInfo()" class="quick-select-btn">Academic Info Only</button>
+                    <button onclick="selectContactInfo()" class="quick-select-btn">Contact Info Only</button>
+                </div>
+
+                <div class="selection-summary">
+                    <strong>Selected: <span id="selectedCount">0</span> columns</strong> | 
+                    Export Format: <span id="exportFormat">Excel</span>
+                </div>
+                
+                <div class="column-selection">
+                    <!-- Personal Information -->
+                    <div class="column-group">
+                        <h4>👤 Personal Information</h4>
+                        <label><input type="checkbox" name="export_columns" value="student_id" checked> Student ID</label>
+                        <label><input type="checkbox" name="export_columns" value="first_name" checked> First Name</label>
+                        <label><input type="checkbox" name="export_columns" value="last_name" checked> Last Name</label>
+                        <label><input type="checkbox" name="export_columns" value="roll_no"> Roll Number</label>
+                        <label><input type="checkbox" name="export_columns" value="prn_no"> PRN Number</label>
+                        <label><input type="checkbox" name="export_columns" value="dob"> Date of Birth</label>
+                        <label><input type="checkbox" name="export_columns" value="gender"> Gender</label>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="column-group">
+                        <h4>📞 Contact Information</h4>
+                        <label><input type="checkbox" name="export_columns" value="email" checked> Email</label>
+                        <label><input type="checkbox" name="export_columns" value="phone"> Phone</label>
+                        <label><input type="checkbox" name="export_columns" value="local_address"> Local Address</label>
+                        <label><input type="checkbox" name="export_columns" value="permanent_address"> Permanent Address</label>
+                        <label><input type="checkbox" name="export_columns" value="native_place"> Native Place</label>
+                    </div>
+
+                    <!-- Academic Information -->
+                    <div class="column-group">
+                        <h4>🎓 Academic Information</h4>
+                        <label><input type="checkbox" name="export_columns" value="department" checked> Department</label>
+                        <label><input type="checkbox" name="export_columns" value="average" checked> Average %</label>
+                        <label><input type="checkbox" name="export_columns" value="live_backlogs"> Live Backlogs</label>
+                        <label><input type="checkbox" name="export_columns" value="year_gap"> Year Gap</label>
+                        <label><input type="checkbox" name="export_columns" value="engg_passing_year"> Passing Year</label>
+                    </div>
+
+                    <!-- 10th Grade Details -->
+                    <div class="column-group">
+                        <h4>📚 10th Grade</h4>
+                        <label><input type="checkbox" name="export_columns" value="tenth_percentage"> 10th Percentage</label>
+                        <label><input type="checkbox" name="export_columns" value="tenth_year"> 10th Year</label>
+                        <label><input type="checkbox" name="export_columns" value="tenth_board"> 10th Board</label>
+                    </div>
+
+                    <!-- 12th Grade Details -->
+                    <div class="column-group">
+                        <h4>📚 12th Grade</h4>
+                        <label><input type="checkbox" name="export_columns" value="twelfth_percentage"> 12th Percentage</label>
+                        <label><input type="checkbox" name="export_columns" value="twelfth_year"> 12th Year</label>
+                        <label><input type="checkbox" name="export_columns" value="twelfth_board"> 12th Board</label>
+                    </div>
+
+                    <!-- Diploma Details -->
+                    <div class="column-group">
+                        <h4>📜 Diploma</h4>
+                        <label><input type="checkbox" name="export_columns" value="diploma_percentage"> Diploma Percentage</label>
+                        <label><input type="checkbox" name="export_columns" value="diploma_year"> Diploma Year</label>
+                        <label><input type="checkbox" name="export_columns" value="diploma_branch"> Diploma Branch</label>
+                    </div>
+
+                    <!-- Semester GPA -->
+                    <div class="column-group">
+                        <h4>📊 Semester GPA</h4>
+                        <label><input type="checkbox" name="export_columns" value="sem1"> SEM 1</label>
+                        <label><input type="checkbox" name="export_columns" value="sem2"> SEM 2</label>
+                        <label><input type="checkbox" name="export_columns" value="sem3"> SEM 3</label>
+                        <label><input type="checkbox" name="export_columns" value="sem4"> SEM 4</label>
+                        <label><input type="checkbox" name="export_columns" value="sem5"> SEM 5</label>
+                        <label><input type="checkbox" name="export_columns" value="sem6"> SEM 6</label>
+                        <label><input type="checkbox" name="export_columns" value="sem7"> SEM 7</label>
+                        <label><input type="checkbox" name="export_columns" value="sem8"> SEM 8</label>
+                    </div>
+
+                    <!-- Skills & Technical -->
+                    <div class="column-group">
+                        <h4>💻 Skills & Technical</h4>
+                        <label><input type="checkbox" name="export_columns" value="programming_languages"> Programming Languages</label>
+                        <label><input type="checkbox" name="export_columns" value="academic_projects"> Academic Projects</label>
+                        <label><input type="checkbox" name="export_columns" value="certificates"> Certificates</label>
+                        <label><input type="checkbox" name="export_columns" value="extracurricular"> Extracurricular</label>
+                        <label><input type="checkbox" name="export_columns" value="hobbies"> Hobbies</label>
+                    </div>
+
+                    <!-- Online Presence -->
+                    <div class="column-group">
+                        <h4>🌐 Online Presence</h4>
+                        <label><input type="checkbox" name="export_columns" value="linkedin_url"> LinkedIn URL</label>
+                        <label><input type="checkbox" name="export_columns" value="github_url"> GitHub URL</label>
+                    </div>
+
+                    <!-- System Information -->
+                    <div class="column-group">
+                        <h4>⚙️ System Information</h4>
+                        <label><input type="checkbox" name="export_columns" value="resume_path"> Resume Available</label>
+                        <label><input type="checkbox" name="export_columns" value="created_at"> Created At</label>
+                        <label><input type="checkbox" name="export_columns" value="last_updated"> Last Updated</label>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <div>
+                        <strong>Export as:</strong>
+                        <label><input type="radio" name="export_type" value="excel" checked onclick="updateExportFormat('Excel')"> Excel</label>
+                        <label><input type="radio" name="export_type" value="pdf" onclick="updateExportFormat('PDF')"> PDF</label>
+                    </div>
+                    <div>
+                        <button onclick="closeColumnModal()" style="background: #6c757d;">Cancel</button>
+                        <button onclick="proceedWithSelectedColumns()" style="background: #28a745; padding: 10px 20px;">
+                            🚀 Download Selected Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Placement Resources Management -->
+        <section class="tpo-section" id="resources">
+            <h3>Manage Preparation Resources</h3>
+            <div class="form-group">
+                <span class="field-help">Uploaded resources available to students for placement preparation</span>
+            </div>
+            <ul class="resource-list">
+                <li>Loading resources...</li>
+            </ul>
+        </section>
+
+        <!-- Student Applications -->
+        <section class="tpo-section" id="applications">
+            <h3>Student Job Applications</h3>
+            <div class="form-group">
+                <span class="field-help">Track and monitor student applications for various job opportunities</span>
+            </div>
+            <ul class="application-list">
+                <li>Loading applications...</li>
+            </ul>
+        </section>
+
+        <!-- Add Student Section - SIMPLIFIED -->
+        <section class="tpo-section">
+            <h3>Add New Student</h3>
+            <form id="addStudentForm" method="POST" action="/add_student" class="simple-form">
+                <div class="form-group form-full-width">
+                    <label for="studentName" class="required">Full Name</label>
+                    <input type="text" id="studentName" name="name" placeholder="e.g., Rajesh Kumar" required>
+                    <span class="field-help">Enter student's complete full name</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="studentEmail" class="required">Email Address</label>
+                    <input type="email" id="studentEmail" name="email" placeholder="e.g., rajesh.kumar@college.edu" required>
+                    <span class="field-help">Student's college email address</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="studentPassword" class="required">Password</label>
+                    <input type="password" id="studentPassword" name="password" placeholder="Create secure password" required>
+                    <span class="field-help">Set password for student login</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="studentBranch" class="required">Branch/Department</label>
+                    <select id="studentBranch" name="branch" required>
+                        <option value="">-- Select Branch --</option>
+                        <option value="AI & ML">AI & ML</option>
+                        <option value="Computer Engineering">Computer Engineering</option>
+                        <option value="Information Technology">Information Technology</option>
+                        <option value="Electronics & Telecommunication">Electronics & Telecommunication</option>
+                        <option value="Mechanical Engineering">Mechanical Engineering</option>
+                        <option value="Civil Engineering">Civil Engineering</option>
+                        <option value="Electrical Engineering">Electrical Engineering</option>
+                    </select>
+                    <span class="field-help">Select student's department/branch</span>
+                </div>
+
+                <div class="form-group form-full-width">
+                    <button type="submit" style="padding: 10px 20px; font-size: 16px;">Add Student</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <script>
+    // ========== UTILITY FUNCTIONS ==========
+    
+    let studentData = []; // Store student data for export
+    let currentExportType = '';
+    let selectedColumns = [];
+
+    async function fetchData(url, options = {}) {
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error(`Fetch error for ${url}:`, error);
+            throw error;
+        }
+    }
+
+    function confirmAction(message) {
+        return confirm(message);
+    }
+
+    function formatValue(value) {
+        if (value === null || value === undefined || value === '') {
+            return '<span class="empty-data">-</span>';
+        }
+        return value;
+    }
+
+    function truncateText(text, maxLength = 30) {
+        if (!text) return '-';
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
+    }
+
+    // ========== COLUMN SELECTION MODAL FUNCTIONS ==========
+
+    function openColumnModal(exportType) {
+        currentExportType = exportType;
+        document.getElementById('columnModal').style.display = 'block';
+        
+        // Set default selections
+        const defaultColumns = ['student_id', 'first_name', 'last_name', 'department', 'average', 'email'];
+        document.querySelectorAll('input[name="export_columns"]').forEach(checkbox => {
+            checkbox.checked = defaultColumns.includes(checkbox.value);
+        });
+        
+        updateSelectedCount();
+        updateExportFormat('Excel');
+    }
+
+    function closeColumnModal() {
+        document.getElementById('columnModal').style.display = 'none';
+        currentExportType = '';
+    }
+
+    function updateSelectedCount() {
+        const selected = document.querySelectorAll('input[name="export_columns"]:checked').length;
+        document.getElementById('selectedCount').textContent = selected;
+    }
+
+    function updateExportFormat(format) {
+        document.getElementById('exportFormat').textContent = format;
+    }
+
+    function selectAllColumns() {
+        document.querySelectorAll('input[name="export_columns"]').forEach(checkbox => {
+            checkbox.checked = true;
+        });
+        updateSelectedCount();
+    }
+
+    function deselectAllColumns() {
+        document.querySelectorAll('input[name="export_columns"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        updateSelectedCount();
+    }
+
+    function selectPersonalInfo() {
+        deselectAllColumns();
+        const personalColumns = ['student_id', 'first_name', 'last_name', 'roll_no', 'prn_no', 'dob', 'gender'];
+        document.querySelectorAll('input[name="export_columns"]').forEach(checkbox => {
+            if (personalColumns.includes(checkbox.value)) {
+                checkbox.checked = true;
+            }
+        });
+        updateSelectedCount();
+    }
+
+    function selectAcademicInfo() {
+        deselectAllColumns();
+        const academicColumns = ['student_id', 'first_name', 'last_name', 'department', 'average', 'live_backlogs', 'tenth_percentage', 'twelfth_percentage'];
+        document.querySelectorAll('input[name="export_columns"]').forEach(checkbox => {
+            if (academicColumns.includes(checkbox.value)) {
+                checkbox.checked = true;
+            }
+        });
+        updateSelectedCount();
+    }
+
+    function selectContactInfo() {
+        deselectAllColumns();
+        const contactColumns = ['student_id', 'first_name', 'last_name', 'email', 'phone', 'linkedin_url', 'github_url'];
+        document.querySelectorAll('input[name="export_columns"]').forEach(checkbox => {
+            if (contactColumns.includes(checkbox.value)) {
+                checkbox.checked = true;
+            }
+        });
+        updateSelectedCount();
+    }
+
+    // Add event listeners to update count when checkboxes change
+    document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('change', function(e) {
+            if (e.target.name === 'export_columns') {
+                updateSelectedCount();
+            }
+        });
+    });
+
+    function proceedWithSelectedColumns() {
+        selectedColumns = Array.from(document.querySelectorAll('input[name="export_columns"]:checked'))
+            .map(checkbox => checkbox.value);
+        
+        if (selectedColumns.length === 0) {
+            alert('Please select at least one column to export.');
+            return;
+        }
+
+        const exportType = document.querySelector('input[name="export_type"]:checked').value;
+        
+        closeColumnModal();
+        
+        if (exportType === 'excel') {
+            exportCustomExcel();
+        } else if (exportType === 'pdf') {
+            exportCustomPDF();
+        }
+    }
+
+    // ========== QUICK EXPORT PRESETS ==========
+
+    const exportPresets = {
+        basic: ['student_id', 'first_name', 'last_name', 'department', 'average', 'email', 'phone'],
+        academic: ['student_id', 'first_name', 'last_name', 'department', 'average', 'live_backlogs', 'tenth_percentage', 'twelfth_percentage', 'engg_passing_year'],
+        contact: ['student_id', 'first_name', 'last_name', 'email', 'phone', 'linkedin_url', 'github_url'],
+        technical: ['student_id', 'first_name', 'last_name', 'programming_languages', 'academic_projects', 'certificates', 'department', 'average'],
+        placement: ['student_id', 'first_name', 'last_name', 'department', 'average', 'email', 'phone', 'programming_languages', 'academic_projects', 'resume_path']
+    };
+
+    function exportBasicInfo() {
+        selectedColumns = exportPresets.basic;
+        exportCustomExcel();
+    }
+
+    function exportAcademicInfo() {
+        selectedColumns = exportPresets.academic;
+        exportCustomExcel();
+    }
+
+    function exportContactInfo() {
+        selectedColumns = exportPresets.contact;
+        exportCustomExcel();
+    }
+
+    function exportFullTechnical() {
+        selectedColumns = exportPresets.technical;
+        exportCustomExcel();
+    }
+
+    function exportForPlacement() {
+        selectedColumns = exportPresets.placement;
+        exportCustomExcel();
+    }
+
+    // ========== CUSTOM EXPORT FUNCTIONALITY ==========
+
+    /**
+     * Export selected columns to Excel
+     */
+    function exportCustomExcel() {
+        if (studentData.length === 0) {
+            alert('No data available to export');
+            return;
+        }
+
+        try {
+            const columnMapping = {
+                'student_id': 'Student ID',
+                'first_name': 'First Name',
+                'last_name': 'Last Name',
+                'roll_no': 'Roll No',
+                'prn_no': 'PRN No',
+                'dob': 'Date of Birth',
+                'gender': 'Gender',
+                'phone': 'Phone',
+                'email': 'Email',
+                'department': 'Department',
+                'average': 'Average %',
+                'live_backlogs': 'Live Backlogs',
+                'year_gap': 'Year Gap',
+                'engg_passing_year': 'Passing Year',
+                'tenth_percentage': '10th Percentage',
+                'tenth_year': '10th Year',
+                'tenth_board': '10th Board',
+                'twelfth_percentage': '12th Percentage',
+                'twelfth_year': '12th Year',
+                'twelfth_board': '12th Board',
+                'diploma_percentage': 'Diploma Percentage',
+                'diploma_year': 'Diploma Year',
+                'diploma_branch': 'Diploma Branch',
+                'sem1': 'SEM 1 GPA',
+                'sem2': 'SEM 2 GPA',
+                'sem3': 'SEM 3 GPA',
+                'sem4': 'SEM 4 GPA',
+                'sem5': 'SEM 5 GPA',
+                'sem6': 'SEM 6 GPA',
+                'sem7': 'SEM 7 GPA',
+                'sem8': 'SEM 8 GPA',
+                'programming_languages': 'Programming Languages',
+                'academic_projects': 'Academic Projects',
+                'certificates': 'Certificates',
+                'extracurricular': 'Extracurricular',
+                'hobbies': 'Hobbies',
+                'linkedin_url': 'LinkedIn URL',
+                'github_url': 'GitHub URL',
+                'local_address': 'Local Address',
+                'permanent_address': 'Permanent Address',
+                'native_place': 'Native Place',
+                'resume_path': 'Resume Available',
+                'created_at': 'Created At',
+                'last_updated': 'Last Updated'
+            };
+
+            const excelData = studentData.map(student => {
+                const row = {};
+                selectedColumns.forEach(col => {
+                    const displayName = columnMapping[col] || col;
+                    if (col === 'resume_path') {
+                        row[displayName] = student[col] ? 'Yes' : 'No';
+                    } else {
+                        row[displayName] = student[col] || '';
+                    }
+                });
+                return row;
+            });
+
+            const ws = XLSX.utils.json_to_sheet(excelData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Selected Student Data');
+            
+            const currentDate = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, `student_selected_data_${currentDate}.xlsx`);
+            
+            alert(`✅ Downloaded ${selectedColumns.length} columns for ${studentData.length} students!`);
+            
+        } catch (error) {
+            console.error('Error exporting custom Excel:', error);
+            alert('Error exporting to Excel: ' + error.message);
+        }
+    }
+
+    /**
+     * Export selected columns to PDF
+     */
+    function exportCustomPDF() {
+        if (studentData.length === 0) {
+            alert('No data available to export');
+            return;
+        }
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+            
+            const columnMapping = {
+                'student_id': 'ID',
+                'first_name': 'First Name',
+                'last_name': 'Last Name',
+                'roll_no': 'Roll No',
+                'prn_no': 'PRN No',
+                'email': 'Email',
+                'phone': 'Phone',
+                'department': 'Department',
+                'average': 'Avg %',
+                'live_backlogs': 'Backlogs',
+                'tenth_percentage': '10th %',
+                'twelfth_percentage': '12th %',
+                'engg_passing_year': 'Pass Year',
+                'programming_languages': 'Programming',
+                'academic_projects': 'Projects',
+                'certificates': 'Certificates',
+                'linkedin_url': 'LinkedIn',
+                'github_url': 'GitHub',
+                'resume_path': 'Resume'
+            };
+
+            const tableHeaders = selectedColumns.map(col => columnMapping[col] || col);
+            const tableData = studentData.map(student => 
+                selectedColumns.map(col => {
+                    if (col === 'resume_path') {
+                        return student[col] ? 'Yes' : 'No';
+                    }
+                    return truncateText(student[col] || '', 15);
+                })
+            );
+
+            doc.text(`Custom Student Data - ${new Date().toISOString().split('T')[0]}`, 14, 15);
+            doc.text(`Selected ${selectedColumns.length} columns for ${studentData.length} students`, 14, 22);
+            
+            doc.autoTable({
+                head: [tableHeaders],
+                body: tableData,
+                startY: 30,
+                styles: { fontSize: 7 },
+                headStyles: { fillColor: [0, 170, 255] },
+                margin: { top: 30 }
+            });
+
+            doc.save(`student_custom_data_${new Date().toISOString().split('T')[0]}.pdf`);
+            
+            alert(`✅ Downloaded ${selectedColumns.length} columns for ${studentData.length} students as PDF!`);
+            
+        } catch (error) {
+            console.error('Error exporting custom PDF:', error);
+            alert('Error exporting to PDF: ' + error.message);
+        }
+    }
+
+    // ========== EXISTING EXPORT FUNCTIONALITY ==========
+
+    /**
+     * Export table data to Excel
+     */
+    function exportToExcel() {
+        if (studentData.length === 0) {
+            alert('No data available to export');
+            return;
+        }
+
+        try {
+            // Prepare data for Excel with ALL attributes
+            const excelData = studentData.map(student => ({
+                'Student ID': student.student_id || '',
+                'First Name': student.first_name || '',
+                'Last Name': student.last_name || '',
+                'Roll No': student.roll_no || '',
+                'PRN No': student.prn_no || '',
+                'Date of Birth': student.dob || '',
+                'Gender': student.gender || '',
+                'Phone': student.phone || '',
+                'Email': student.email || '',
+                '10th Percentage': student.tenth_percentage || '',
+                '10th Year': student.tenth_year || '',
+                '10th Board': student.tenth_board || '',
+                '12th Percentage': student.twelfth_percentage || '',
+                '12th Year': student.twelfth_year || '',
+                '12th Board': student.twelfth_board || '',
+                'Diploma Percentage': student.diploma_percentage || '',
+                'Diploma Year': student.diploma_year || '',
+                'Diploma Branch': student.diploma_branch || '',
+                'Department': student.department || '',
+                'Passing Year': student.engg_passing_year || '',
+                'Average %': student.average || '',
+                'Live Backlogs': student.live_backlogs || '',
+                'Year Gap': student.year_gap || '',
+                'SEM 1 GPA': student.sem1 || '',
+                'SEM 2 GPA': student.sem2 || '',
+                'SEM 3 GPA': student.sem3 || '',
+                'SEM 4 GPA': student.sem4 || '',
+                'SEM 5 GPA': student.sem5 || '',
+                'SEM 6 GPA': student.sem6 || '',
+                'SEM 7 GPA': student.sem7 || '',
+                'SEM 8 GPA': student.sem8 || '',
+                'Programming Languages': student.programming_languages || '',
+                'Academic Projects': student.academic_projects || '',
+                'Certificates': student.certificates || '',
+                'Extracurricular': student.extracurricular || '',
+                'Hobbies': student.hobbies || '',
+                'LinkedIn': student.linkedin_url || '',
+                'GitHub': student.github_url || '',
+                'Local Address': student.local_address || '',
+                'Permanent Address': student.permanent_address || '',
+                'Native Place': student.native_place || '',
+                'Resume Available': student.resume_path ? 'Yes' : 'No',
+                'Created At': student.created_at || '',
+                'Last Updated': student.last_updated || ''
+            }));
+
+            // Create worksheet
+            const ws = XLSX.utils.json_to_sheet(excelData);
+            
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Student Complete Data');
+            
+            // Generate Excel file and download
+            const currentDate = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, `student_complete_database_${currentDate}.xlsx`);
+            
+        } catch (error) {
+            console.error('Error exporting to Excel:', error);
+            alert('Error exporting to Excel: ' + error.message);
+        }
+    }
+
+    /**
+     * Export table data to PDF
+     */
+    function exportToPDF() {
+        if (studentData.length === 0) {
+            alert('No data available to export');
+            return;
+        }
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+            
+            // Add title
+            const currentDate = new Date().toISOString().split('T')[0];
+            doc.text(`Complete Student Database - ${currentDate}`, 14, 15);
+            
+            // Prepare table data for PDF with key attributes
+            const tableData = studentData.map(student => [
+                student.student_id || '',
+                truncateText(student.first_name || ''),
+                truncateText(student.last_name || ''),
+                student.roll_no || '',
+                student.prn_no || '',
+                student.dob || '',
+                student.gender || '',
+                student.phone || '',
+                truncateText(student.email || ''),
+                student.tenth_percentage || '',
+                student.twelfth_percentage || '',
+                student.department || '',
+                student.average ? student.average + '%' : '',
+                student.live_backlogs || '',
+                student.resume_path ? 'Yes' : 'No'
+            ]);
+
+            // Define table columns
+            const tableHeaders = [
+                'ID', 'First Name', 'Last Name', 'Roll No', 'PRN No', 'DOB', 
+                'Gender', 'Phone', 'Email', '10th %', '12th %', 'Department', 
+                'Average %', 'Backlogs', 'Resume'
+            ];
+
+            // Create table
+            doc.autoTable({
+                head: [tableHeaders],
+                body: tableData,
+                startY: 20,
+                styles: { fontSize: 6 },
+                headStyles: { fillColor: [0, 170, 255] }
+            });
+
+            // Save PDF
+            doc.save(`student_database_${currentDate}.pdf`);
+            
+        } catch (error) {
+            console.error('Error exporting to PDF:', error);
+            alert('Error exporting to PDF: ' + error.message);
+        }
+    }
+
+    // ========== STUDENT DATABASE TABLE MANAGEMENT ==========
+
+    /**
+     * Load and display ALL student records from database
+     */
+    async function loadStudentProfiles() {
+        try {
+            const data = await fetchData("/all_student_profiles");
+            studentData = data; // Store data for export
+            const tableBody = document.getElementById('studentTableBody');
+            
+            let html = "";
+            if (data.length === 0) {
+                html = `<tr>
+                    <td colspan="42" style="text-align: center; padding: 20px;">
+                        No student records found in database.
+                    </td>
+                </tr>`;
+            } else {
+                // Create rows with ALL attributes
+                data.forEach(student => {
+                    html += `
+                        <tr>
+                            <!-- Personal Information -->
+                            <td>${formatValue(student.student_id)}</td>
+                            <td>${formatValue(student.first_name)}</td>
+                            <td>${formatValue(student.last_name)}</td>
+                            <td>${formatValue(student.roll_no)}</td>
+                            <td>${formatValue(student.prn_no)}</td>
+                            <td>${formatValue(student.dob)}</td>
+                            <td>${formatValue(student.gender)}</td>
+                            <td>${formatValue(student.phone)}</td>
+                            <td title="${student.email || ''}">${truncateText(student.email)}</td>
+                            
+                            <!-- 10th Grade -->
+                            <td>${formatValue(student.tenth_percentage)}</td>
+                            <td>${formatValue(student.tenth_year)}</td>
+                            <td>${formatValue(student.tenth_board)}</td>
+                            
+                            <!-- 12th Grade -->
+                            <td>${formatValue(student.twelfth_percentage)}</td>
+                            <td>${formatValue(student.twelfth_year)}</td>
+                            <td>${formatValue(student.twelfth_board)}</td>
+                            
+                            <!-- Diploma -->
+                            <td>${formatValue(student.diploma_percentage)}</td>
+                            <td>${formatValue(student.diploma_year)}</td>
+                            <td>${formatValue(student.diploma_branch)}</td>
+                            
+                            <!-- Engineering -->
+                            <td>${formatValue(student.department)}</td>
+                            <td>${formatValue(student.engg_passing_year)}</td>
+                            <td>${formatValue(student.average)}</td>
+                            <td>${formatValue(student.live_backlogs)}</td>
+                            <td>${formatValue(student.year_gap)}</td>
+                            
+                            <!-- Semester GPA -->
+                            <td>${formatValue(student.sem1)}</td>
+                            <td>${formatValue(student.sem2)}</td>
+                            <td>${formatValue(student.sem3)}</td>
+                            <td>${formatValue(student.sem4)}</td>
+                            <td>${formatValue(student.sem5)}</td>
+                            <td>${formatValue(student.sem6)}</td>
+                            <td>${formatValue(student.sem7)}</td>
+                            <td>${formatValue(student.sem8)}</td>
+                            
+                            <!-- Skills & Projects -->
+                            <td title="${student.programming_languages || ''}">${truncateText(student.programming_languages)}</td>
+                            <td title="${student.academic_projects || ''}">${truncateText(student.academic_projects)}</td>
+                            <td title="${student.certificates || ''}">${truncateText(student.certificates)}</td>
+                            <td title="${student.extracurricular || ''}">${truncateText(student.extracurricular)}</td>
+                            <td title="${student.hobbies || ''}">${truncateText(student.hobbies)}</td>
+                            
+                            <!-- Online Presence -->
+                            <td title="${student.linkedin_url || ''}">${truncateText(student.linkedin_url)}</td>
+                            <td title="${student.github_url || ''}">${truncateText(student.github_url)}</td>
+                            
+                            <!-- Address -->
+                            <td title="${student.local_address || ''}">${truncateText(student.local_address)}</td>
+                            <td title="${student.permanent_address || ''}">${truncateText(student.permanent_address)}</td>
+                            <td>${formatValue(student.native_place)}</td>
+                            
+                            <!-- System Info -->
+                            <td>${student.resume_path ? '✅' : '❌'}</td>
+                            <td>${formatValue(student.created_at)}</td>
+                            <td>${formatValue(student.last_updated)}</td>
+                            
+                            <!-- Actions -->
+                            <td>
+                                <button onclick="viewFullProfile(${student.student_id})" class="view-btn" title="View Full Profile">View</button>
+                                <button onclick="viewResume('${student.resume_path}')" class="view-btn" title="View Resume">Resume</button>
+                                <button onclick="deleteStudent(${student.student_id})" class="delete-btn" title="Delete Student">Delete</button>
+                            </td>
+                        </tr>`;
+                });
+            }
+            tableBody.innerHTML = html;
+        } catch (error) {
+            console.error('Error loading student profiles:', error);
+            document.getElementById('studentTableBody').innerHTML = 
+                `<tr>
+                    <td colspan="42" style="text-align: center; padding: 20px; color: red;">
+                        Error loading student records: ${error.message}
+                    </td>
+                </tr>`;
+        }
+    }
+
+    /**
+     * View full student profile in modal
+     */
+    async function viewFullProfile(studentId) {
+        try {
+            const student = await fetchData(`/get_student_profile/${studentId}`);
+            const modal = document.getElementById('profileModal');
+            const content = document.getElementById('modalContent');
+            
+            content.innerHTML = `
+                <h3>Complete Profile - ${student.first_name || ''} ${student.last_name || ''}</h3>
+                <div class="profile-details">
+                    
+                    <div class="profile-section">
+                        <h4>Personal Information</h4>
+                        <p><strong>Student ID:</strong> ${student.student_id || 'N/A'}</p>
+                        <p><strong>Name:</strong> ${student.first_name || ''} ${student.last_name || ''}</p>
+                        <p><strong>Roll No:</strong> ${student.roll_no || 'N/A'}</p>
+                        <p><strong>PRN No:</strong> ${student.prn_no || 'N/A'}</p>
+                        <p><strong>Date of Birth:</strong> ${student.dob || 'N/A'}</p>
+                        <p><strong>Gender:</strong> ${student.gender || 'N/A'}</p>
+                        <p><strong>Email:</strong> ${student.email || 'N/A'}</p>
+                        <p><strong>Phone:</strong> ${student.phone || 'N/A'}</p>
+                    </div>
+                    
+                    <div class="profile-section">
+                        <h4>Academic Information</h4>
+                        <p><strong>10th Percentage:</strong> ${student.tenth_percentage || 'N/A'}%</p>
+                        <p><strong>10th Year:</strong> ${student.tenth_year || 'N/A'}</p>
+                        <p><strong>10th Board:</strong> ${student.tenth_board || 'N/A'}</p>
+                        <p><strong>12th Percentage:</strong> ${student.twelfth_percentage || 'N/A'}%</p>
+                        <p><strong>12th Year:</strong> ${student.twelfth_year || 'N/A'}</p>
+                        <p><strong>12th Board:</strong> ${student.twelfth_board || 'N/A'}</p>
+                        <p><strong>Diploma Percentage:</strong> ${student.diploma_percentage || 'N/A'}%</p>
+                        <p><strong>Diploma Year:</strong> ${student.diploma_year || 'N/A'}</p>
+                        <p><strong>Diploma Branch:</strong> ${student.diploma_branch || 'N/A'}</p>
+                    </div>
+                    
+                    <div class="profile-section">
+                        <h4>Engineering Details</h4>
+                        <p><strong>Department:</strong> ${student.department || 'N/A'}</p>
+                        <p><strong>Passing Year:</strong> ${student.engg_passing_year || 'N/A'}</p>
+                        <p><strong>Average %:</strong> ${student.average || 'N/A'}%</p>
+                        <p><strong>Live Backlogs:</strong> ${student.live_backlogs || '0'}</p>
+                        <p><strong>Year Gap:</strong> ${student.year_gap || '0'}</p>
+                    </div>
+                    
+                    <div class="profile-section">
+                        <h4>Semester-wise GPA</h4>
+                        <p><strong>SEM 1:</strong> ${student.sem1 || 'N/A'}</p>
+                        <p><strong>SEM 2:</strong> ${student.sem2 || 'N/A'}</p>
+                        <p><strong>SEM 3:</strong> ${student.sem3 || 'N/A'}</p>
+                        <p><strong>SEM 4:</strong> ${student.sem4 || 'N/A'}</p>
+                        <p><strong>SEM 5:</strong> ${student.sem5 || 'N/A'}</p>
+                        <p><strong>SEM 6:</strong> ${student.sem6 || 'N/A'}</p>
+                        <p><strong>SEM 7:</strong> ${student.sem7 || 'N/A'}</p>
+                        <p><strong>SEM 8:</strong> ${student.sem8 || 'N/A'}</p>
+                    </div>
+                    
+                    <div class="profile-section">
+                        <h4>Skills & Projects</h4>
+                        <p><strong>Programming Languages:</strong> ${student.programming_languages || 'N/A'}</p>
+                        <p><strong>Academic Projects:</strong> ${student.academic_projects || 'N/A'}</p>
+                        <p><strong>Certificates:</strong> ${student.certificates || 'N/A'}</p>
+                        <p><strong>Extracurricular:</strong> ${student.extracurricular || 'N/A'}</p>
+                        <p><strong>Hobbies:</strong> ${student.hobbies || 'N/A'}</p>
+                    </div>
+                    
+                    <div class="profile-section">
+                        <h4>Online Presence & Address</h4>
+                        <p><strong>LinkedIn:</strong> ${student.linkedin_url || 'N/A'}</p>
+                        <p><strong>GitHub:</strong> ${student.github_url || 'N/A'}</p>
+                        <p><strong>Local Address:</strong> ${student.local_address || 'N/A'}</p>
+                        <p><strong>Permanent Address:</strong> ${student.permanent_address || 'N/A'}</p>
+                        <p><strong>Native Place:</strong> ${student.native_place || 'N/A'}</p>
+                    </div>
+                    
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        } catch (error) {
+            console.error('Error loading full profile:', error);
+            alert('Failed to load student profile');
+        }
+    }
+
+    function viewResume(resumePath) {
+        if (resumePath) {
+            window.open(`/download_resume/${resumePath}`, '_blank');
+        } else {
+            alert('No resume available for this student.');
+        }
+    }
+
+    async function deleteStudent(studentId) {
+        if (!confirmAction("Are you sure you want to delete this student and all their profile data?")) return;
+        
+        try {
+            const data = await fetchData(`/delete_student/${studentId}`, { method: "POST" });
+            alert(data.message);
+            loadStudentProfiles();
+        } catch (error) {
+            console.error("Error deleting student:", error);
+            alert("Failed to delete student");
+        }
+    }
+
+    // ========== RESOURCE MANAGEMENT ==========
+
+    async function loadResources() {
+        try {
+            const data = await fetchData("/all_resources");
+            const resourceList = document.querySelector(".resource-list");
+            
+            let html = "";
+            if (data.length === 0) {
+                html = "<li>No resources available.</li>";
+            } else {
+                data.forEach(resource => {
+                    html += `<li>
+                        <strong>${resource.title}</strong> - ${resource.description || 'No description'} 
+                        <a href="/download_resource/${resource.file_path}" target="_blank">Download</a> | 
+                        <button onclick="deleteResource(${resource.resource_id})" class="delete-btn">Delete</button>
+                    </li>`;
+                });
+            }
+            resourceList.innerHTML = html;
+        } catch (error) {
+            console.error('Error loading resources:', error);
+            document.querySelector(".resource-list").innerHTML = '<li>Error loading resources</li>';
+        }
+    }
+
+    async function deleteResource(resourceId) {
+        if (!confirmAction("Are you sure you want to delete this resource?")) return;
+        
+        try {
+            const data = await fetchData(`/delete_resource/${resourceId}`, { method: "POST" });
+            alert(data.message);
+            loadResources();
+        } catch (error) {
+            console.error("Error deleting resource:", error);
+            alert("Failed to delete resource");
+        }
+    }
+
+    // ========== APPLICATION MANAGEMENT ==========
+
+    async function loadApplications() {
+        try {
+            const data = await fetchData("/all_applications");
+            const applicationList = document.querySelector(".application-list");
+            
+            let html = "";
+            if (data.length === 0) {
+                html = "<li>No applications available.</li>";
+            } else {
+                data.forEach(app => {
+                    const statusColor = app.status === 'accepted' ? 'green' : 
+                                      app.status === 'rejected' ? 'red' : 'orange';
+                    
+                    html += `<li>
+                        <strong>${app.student_name}</strong> (${app.student_email}) applied for <strong>${app.job_title}</strong><br>
+                        Status: <span style="color: ${statusColor}">${app.status || 'Applied'}</span> | 
+                        Applied: ${new Date(app.applied_date).toLocaleDateString()}
+                    </li>`;
+                });
+            }
+            applicationList.innerHTML = html;
+        } catch (error) {
+            console.error('Error loading applications:', error);
+            document.querySelector(".application-list").innerHTML = '<li>Error loading applications</li>';
+        }
+    }
+
+    // ========== MODAL MANAGEMENT ==========
+
+    function closeModal() {
+        document.getElementById('profileModal').style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('profileModal');
+        if (event.target === modal) {
+            closeModal();
+        }
+        const columnModal = document.getElementById('columnModal');
+        if (event.target === columnModal) {
+            closeColumnModal();
+        }
+    }
+
+    // ========== INITIALIZATION ==========
+
+    function initializeDashboard() {
+        loadStudentProfiles();
+        loadApplications();
+        loadResources();
+    }
+
+    document.addEventListener("DOMContentLoaded", initializeDashboard);
+    </script>
+</body>
+</html>

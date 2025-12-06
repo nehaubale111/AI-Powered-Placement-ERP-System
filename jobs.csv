@@ -1,0 +1,6 @@
+﻿job_id,company_id,title,description,location ,salary,deadline,eligibility_criteria 
+6,1,Data Analyst,"Python, SQL, Statistics",Pune,10 LPA,10-Dec-25,0-2 years experience
+7,2,Software Engineer,"Java, OOP, DBMS",Mumbai,15 LPA,15-Dec-25,1-2 years experience
+8,3,Web Developer,"HTML, CSS, JavaScript, React",Banglore,20 LPA,01-Jan-26,0-1 year experience
+9,4,Machine Learning Intern,"Python,Machine Learning, Pandas, Numpy",Chennai,25 LPA,15-Jan-26,0-5 years experience
+10,5,Administrator,"SQL, MySQL, DatabaseDesign",Nashik,12LPA,01-Jan-26,5 years experience

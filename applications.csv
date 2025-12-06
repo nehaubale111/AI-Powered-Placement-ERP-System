@@ -1,0 +1,6 @@
+﻿application_id,student_id,job_id,status,applied_date
+11,1,6,applied,01-Jan-25
+12,2,7,applied,15-Feb-25
+13,3,8,shortlisted,20-Apr-25
+14,4,9,rejected,31-May-25
+15,5,10,applied,26-Jun-25

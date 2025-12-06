@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact | ABC College Placement Portal</title>
+  <!-- Corrected CSS path based on your static/css/style.css structure -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <!-- Navbar -->
+  <div class="navbar">
+    <h1>ABC College</h1>
+    <ul>
+      <!-- Changed 'home' to 'login' based on previous discussion and app.py routing -->
+      <li><a href="{{ url_for('login') }}">Home</a></li>
+      <li><a href="{{ url_for('about') }}">About</a></li>
+      <li class="active"><a href="{{ url_for('contact') }}">Contact</a></li>
+      <li><a href="{{ url_for('login') }}">Login</a></li>
+    </ul>
+  </div>
+   {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="alert {{ 'alert-success' if category=='success' else 'alert-danger' }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Contact Section -->
+  <div class="about-section">
+    <h2>Contact Us</h2>
+    <p>For any placement-related queries, reach out to us:</p>
+
+    <h3>Placement Office</h3>
+    <p>Email: <a href="mailto:placements@abccollege.edu">placements@abccollege.edu</a></p>
+    <p>Phone: +91 98765 43210</p>
+    <p>Address: ABC College, Knowledge Road, New Delhi - 110001</p>
+
+    <h3>Send us a Message</h3>
+    <!-- Form updated with action, method, and name attributes -->
+    <form action="{{ url_for('submit_contact') }}" method="POST">
+      <input type="text" name="name" placeholder="Your Name" required>
+      <input type="email" name="email" placeholder="Your Email" required>
+      <textarea name="message" placeholder="Your Message" rows="4" required></textarea>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2025 ABC College • All Rights Reserved</p>
+  </footer>
+</body>
+</html>

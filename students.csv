@@ -1,0 +1,11 @@
+name,email,password,cgpa,passing_year,branch,phone,skills,resume_path
+Rahul Sharma,rahul@example.com,hashed_pw1,8.5,2025,CSE,9876543210,"Python, Java",/resumes/rahul.pdf
+Priya Singh,priya@example.com,hashed_pw2,9.0,2024,IT,9123456780,"C++, SQL",/resumes/priya.pdf
+Amit Verma,amit@example.com,hashed_pw3,7.8,2025,ECE,9988776655,"Python, ML",/resumes/amit.pdf
+Sneha Patel,sneha@example.com,hashed_pw4,8.2,2024,CSE,9001122334,"Java, HTML, CSS",/resumes/sneha.pdf
+Rohit Mehta,rohit@example.com,hashed_pw5,7.5,2025,ME,9112233445,"AutoCAD, SolidWorks",/resumes/rohit.pdf
+Ananya Das,ananya@example.com,hashed_pw6,9.1,2024,CSE,9332211455,"Python, Data Science",/resumes/ananya.pdf
+Karan Kapoor,karan@example.com,hashed_pw7,8.8,2025,IT,9223344556,"C, C++, Java",/resumes/karan.pdf
+Neha Joshi,neha@example.com,hashed_pw8,8.0,2025,ECE,9887766554,"AI, ML, Python",/resumes/neha.pdf
+Arjun Nair,arjun@example.com,hashed_pw9,7.9,2024,CSE,9776655443,"Networks, Security",/resumes/arjun.pdf
+Simran Kaur,simran@example.com,hashed_pw10,9.3,2025,IT,9665544332,"React, Node.js",/resumes/simran.pdf

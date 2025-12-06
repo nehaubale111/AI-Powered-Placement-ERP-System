@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About | ABC College Placement Portal</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <!-- Navbar -->
+  <div class="navbar">
+    <h1>ABC College</h1>
+    <ul>
+      <li><a href="{{ url_for('login') }}">Home</a></li>
+      <li><a href="{{ url_for('about') }}" class="active">About</a></li>
+      <li><a href="{{ url_for('contact') }}">Contact</a></li>
+      <li><a href="{{ url_for('login') }}">Login</a></li>
+    </ul>
+  </div>
+
+  <!-- About Section -->
+  <div class="about-section">
+    <h2>About ABC College Placement Cell</h2>
+    <p>
+      ABC College has been consistently achieving outstanding placement results for the past decade.  
+      Our strong connections with top recruiters and dedicated training programs ensure students are  
+      industry-ready.
+    </p>
+
+    <h3>Our Placement Highlights</h3>
+    <ul>
+      <li>95% placement rate in the last 5 years.</li>
+      <li>Partnerships with 200+ recruiters including TechCorp, Infosys, and FinServe.</li>
+      <li>Average package of ₹6 LPA, with top offers exceeding ₹18 LPA.</li>
+    </ul>
+
+    <h3>Alumni Reviews</h3>
+    <div class="alumni-carousel">
+      <blockquote>"The mock interviews really boosted my confidence. Now I’m at TechCorp!" – Priya (Batch 2022)</blockquote>
+      <blockquote>"The resume screening tool helped me land my first job." – Rohit (Batch 2021)</blockquote>
+      <blockquote>"Great support from TPO and faculty during placements." – Meera (Batch 2020)</blockquote>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2025 ABC College • All Rights Reserved</p>
+  </footer>
+</body>
+</html>

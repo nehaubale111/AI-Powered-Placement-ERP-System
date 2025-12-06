@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ABC College Placement Portal</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- Navbar -->
+ <div class="navbar">
+  <h1>ABC College</h1>
+  <ul>
+    <li><a href="{{ url_for('login') }}" class="active">Home</a></li>
+    <li><a href="{{ url_for('about') }}">About Us</a></li>
+    <li><a href="{{ url_for('contact') }}">Contact</a></li>
+    
+  </ul>
+</div>
+
+
+
+
+  <!-- Hero -->
+<div class="hero">
+  <div class="hero-text">
+    <h2>Welcome to ABC College Placement Portal</h2>
+    <p>
+      <strong>Connecting students with industry using modern tools — resume screening, 
+      mock interviews, campus drives and analytics.</strong>
+    </p>
+  </div>
+
+  <div class="hero-image">
+    <img src="{{ url_for('static', filename='uploads/campus.png') }}" alt="ABC College Campus">
+  </div>
+</div>
+
+  <!-- Main Content Area with two columns -->
+  <div class="main-content-grid">
+
+    <!-- Announcements Carousel -->
+<!-- Announcements Carousel -->
+<div class="announcements-carousel">
+  <h3>Latest Announcements</h3>
+  <div class="carousel-container">
+    <div class="carousel-slide">
+      <p><strong>Aug 05, 2025:</strong> Internship drive with TechCorp — registration open.</p>
+      <p><strong>Jul 28, 2025:</strong> Resume workshop scheduled on Aug 10.</p>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+    <!-- Login -->
+    <div class="login-container">
+      <h2>Login</h2>
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="flash-messages">
+            {% for message in messages %}
+              <p class="flash">{{ message }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      <form method="POST" action="/login">
+        <input type="email" name="email" placeholder="Email" required><br>
+        <input type="password" name="password" placeholder="Password" required><br>
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- About Us Section -->
+  <div id="about" class="about-section">
+    <h2>About ABC College</h2>
+    <p>
+      ABC College has consistently achieved excellent placement records over the past decade. 
+      With strong industry connections and dedicated training programs, our students are placed 
+      in top companies across IT, core engineering, and management.
+    </p>
+
+    <h3>Placement Highlights</h3>
+    <ul>
+      <li>2024–25: 95% placement rate with over 120+ recruiters visiting campus.</li>
+      <li>Highest Package: ₹28 LPA • Average Package: ₹7.5 LPA.</li>
+      <li>Top recruiters: TechCorp, Infosys, Wipro, Amazon, TCS.</li>
+    </ul>
+
+    <h3>Alumni Reviews</h3>
+    <div class="alumni-carousel">
+      <blockquote>
+        “The Placement Cell guided me throughout my preparation, from mock interviews 
+        to resume workshops. I owe my success at Amazon to the mentorship here.”  
+        — <em>Ravi Kumar, B.Tech CSE, Batch 2022</em>
+      </blockquote>
+      <blockquote>
+        “ABC College gave me not just academic knowledge but also practical exposure 
+        that helped me secure a role at Microsoft.”  
+        — <em>Priya Sharma, B.Tech ECE, Batch 2021</em>
+      </blockquote>
+    </div>
+  </div>
+
+  <!-- Contact Section -->
+  <div id="contact" class="about-section">
+    <h2>Contact Us</h2>
+    <p>Email: placement@abccollege.edu</p>
+    <p>Phone: +91-9876543210</p>
+    <p>Address: ABC College, Knowledge Park, New Delhi, India</p>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    © 2025 ABC College • All Rights Reserved
+  </footer>
+
+</body>
+</html>
